@@ -61,6 +61,35 @@ Event OnUpdate()
     RegisterForSingleUpdate(15.0)
 EndEvent
 
+Function Restore()
+    Int convoys = JDB.solveObj(".BRConvoySystem.convoys")
+
+    String convoyName = JMap.nextKey(convoys)
+    While convoyName
+        Int convoy = JMap.getObj(convoys, convoyName)
+
+        Actor leader = JMap.getForm(convoy, "leader") As Actor
+        SetLinkedRef(leader, ControllerLocation.GetLocationRef(JMap.getStr(convoy, "locName")), Package_Travel_Kwd)
+
+        Int i = 0
+        Actor prevActor = leader
+        Int prisoners = JMap.getObj(convoy, "prisoners")
+        While i < JArray.count(prisoners)
+            Actor prisoner = JArray.getForm(prisoners, i) As Actor
+            SetLinkedRef(prisoner, prevActor, Package_Follow_Kwd)
+            i += 1
+            prevActor = prisoner
+        EndWhile
+
+        Actor guard = JMap.getForm(convoy, "guard") As Actor
+        If guard
+            SetLinkedRef(guard, prevActor, Package_Follow_Kwd)
+        EndIf
+
+        convoyName = JMap.nextKey(convoys, convoyName)
+    EndWhile
+EndFunction
+
 Function CreateConvoy(String name, Actor leader, Int prisoners, String locName, Actor guard = None)
     Int convoy = JMap.object()
     JMap.setStr(convoy, "status", "created")
